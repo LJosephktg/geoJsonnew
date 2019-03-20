@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>sample</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw-src.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/2.0.2/turf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <style>
+        .leaflet-clickable {
+            transition: fill-opacity .2s, fill .2s;
+        }
+
+        #instructions {
+            background-color: #eee;
+            border-radius: 2px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 9000;
+            width: 300px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 0.5em;
+            line-height: 1.2;
+            font-weight: 800;
+        }
+
+        .map {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.5
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map" class="map"></div>
+    <div id="instructions">
+</body>
+<script>
+    var map = L.map('map', {
+        center: [42.378, -71.103],
+        zoom: 14
+    });
+
+    var Stamen_TonerLite = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        subdomains: 'abcd',
+        minZoom: 0,
+        maxZoom: 20,
+        ext: 'png'
+    }).addTo(map);
+
+    var myGeoJson;
+
+    var leafletLayers;
+
+    var geojsonMarkerOptions = {
+        color: 'green'
+    }
+
+    var url ="https://raw.githubusercontent.com/cambridgegis/cambridgegis_data/master/Landmark/Public_Art/LANDMARK_PublicArt.geojson";
+
+    // var url = "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer/0";
+
+
+
+    $.ajax(url).done(function (data) {
+        myGeoJson = JSON.parse(data);
+        leafletLayers = L.geoJson(myGeoJson, {
+            pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, geojsonMarkerOptions);
+            }
+        });
+        leafletLayers.addTo(map);
+    });
+
+    var styleMarkers = function (closestPoints) {
+        var artIds = _.map(closestPoints, function (point) {
+            return point.properties.ArtID;
+        })
+        _.each(leafletLayers._layers, function (layer, index) {
+            if (_.contains(artIds, layer.feature.properties.ArtID)) {
+                layer.setStyle({
+                    color: 'orange',
+                    radius: 25
+                });
+            } else {
+                layer.setStyle({
+                    color: 'green',
+                    radius: 10
+                });
+            }
+        })
+    }
+
+    var getClosestPoints = function (e) {
+        var allJson = _.clone(myGeoJson);
+        console.log("VAlue" ,allJson)
+        var point = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [e.latlng.lng, e.latlng.lat]
+            }
+        };
+        var closest = [];
+        for (var i = 1; i < 5; i++) {
+            near = turf.nearest(point, allJson);
+            closest.push(near);
+            allJson = {
+                type: "FeatureCollections",
+                features: _.without(allJson.features, near)
+            };
+        }
+        return closest;
+    }
+
+    map.on('mousemove', function (e) {
+        var closestPoints = getClosestPoints(e);
+        styleMarkers(closestPoints);
+    });
+</script>
+
+</html>
