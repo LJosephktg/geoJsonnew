@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>sample</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.2.3/leaflet.draw-src.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/2.0.2/turf.min.js"></script>
+    <script src="https://unpkg.com/esri-leaflet@2.2.3/dist/esri-leaflet.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/5.1.5/turf.min.js"></script> -->
+
+</head>
+
+<body>
+    <div id="map" style="width: 800px; height: 400px;"></div>
+</body>
+<script>
+    //     var map = L.map('map').setView([11.420847, 76.858948], 13);
+    //     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // }).addTo(map);
+    //     var point = turf.point([11.420847, 76.858948]);
+    //     var buffered = turf.buffer(point, 500, {units: 'miles'});
+    //     console.log(buffered, point)
+
+
+    /* Variables */
+    L_PREFER_CANVAS = true;
+    var wmpData = 'http://webgis.lat60.ca/arcgis/rest/services/IRAP_Data/FDS_Mapping/MapServer/';
+    var wmpTask = 'http://webgis.lat60.ca/arcgis/rest/services/IRAP_Data/BufferPoints/GPServer/Buffer%20Points';
+    var wmpView = [11.420847, 76.858948];
+    var wmpZoom = 6;
+
+
+    /* ------------------------------------------------------------ Map */
+
+    /* Initialize Map */
+    var wmpMap = L.map('map').setView(wmpView, wmpZoom);
+
+    /* Map Tile Layers */
+    var osm = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(wmpMap);
+
+    /* Data Layers */
+    var layer_02 = L.esri.featureLayer({
+        url: wmpData + '1'
+    }).addTo(wmpMap);
+
+
+
+
+    /* Geometry */
+    var sPoint = [11.420847, 76.858948];
+    var sPoint1 = [12.419115, 77.862089]
+    // var sBuffer = 35000;
+
+    // var selectionCircle = L.circle(
+    //     sPoint,
+    //     sBuffer,
+    //     {
+    //         color: '#BF3030',
+    //         weight: '2'
+    //     }
+    // );
+    // selectionCircle.addTo(wmpMap);
+
+
+    // var c2Point = [12.420847, 76.858948];
+    // var c2Buffer = 50000;
+
+    // var circle2 = L.circle(
+    //     c2Point,
+    //     c2Buffer,
+    //     {
+    //         color: '#30BF30',
+    //         weight: '2'
+    //     }
+    // );
+    // circle2.addTo(wmpMap);
+
+
+
+
+    /* ------------------------------------------------------------ Turf.js */
+
+    var colorJson = 'https://github.com/bahamas10/css-color-names/blob/master/css-color-names.json';
+
+    var tPoint = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Point",
+            "coordinates": sPoint
+        }
+    };
+
+    var tPoint1 = {
+        "type": "Feature",
+        "properties": {},
+        "geometry": {
+            "type": "Point",
+            "coordinates": sPoint1
+        }
+    };
+
+    
+
+
+    var buffered = turf.buffer(tPoint, 25, 'miles');
+    // console.log("Buffered : ", buffered.features[0].geometry.coordinates[0])
+    // var circleGeo = buffered.geometry.coordinates[0];
+    var circleGeo = buffered.features[0].geometry.coordinates[0];
+    // console.log(circleGeo)
+    var polyCircle = L.polygon(circleGeo,
+        {
+            color: '#BF30BF',
+            weight: '1.5'
+        }
+    );
+    polyCircle.addTo(wmpMap);
+
+    var buffered1  = turf.buffer(tPoint1, 29, 'miles');
+    var circleGeo1 =  buffered1.features[0].geometry.coordinates[0];
+    console.log("Second One : ", circleGeo1)
+    var polyCircle1 = L.polygon(circleGeo1, {
+        color: "blue",
+        weight:'1.9'
+    })
+    polyCircle1.addTo(wmpMap);
+
+    var line = turf.lineString([[-83, 30], [-84, 36], [-78, 41]]);
+    var options = {units: 'miles'};
+
+    var along = turf.along(line, 200, options)
+    along.addTo(wmpMap);
+
+    // var point1 = turf.point([11.420847, 76.858948], {"marker-color": "#F00"});
+    // var point2 =  turf.point([12.419115, 77.862089], {"marker-color": "#F01293"})
+
+    //  var bearing =  turf.rhumbBearing(point1, point2)
+    //  bearing.addTo(wmpMap)
+    // var t2Point = {
+    //     "type": "Feature",
+    //     "properties": {},
+    //     "geometry": {
+    //         "type": "Point",
+    //         "coordinates": c2Point
+    //     }
+    // };
+    // var buffered2 = turf.buffer(t2Point, c2Buffer, 'meters');
+    // // var circleGeo2 = buffered2.geometry.coordinates[0];
+    // var circleGeo2 = buffered2.features[0].geometry.coordinates[0]
+    // // console.log("CircleGeo2 :", circleGeo2)
+    // var polyCircle2 = L.polygon(circleGeo2,
+    //     {
+    //         color: '#30BFBF',
+    //         weight: '2'
+    //     }
+    // );
+
+    // var polyCircle2 = buffered2.map(data=> {
+    //     console.log("Data : ", data)
+    // })
+    // polyCircle2.addTo(wmpMap);
+
+
+
+    /* ------------------------------------------------------------ Functions */
+
+// function execQuery() {
+// 	console.log(result);
+// }
+
+
+</script>
+
+</html>
